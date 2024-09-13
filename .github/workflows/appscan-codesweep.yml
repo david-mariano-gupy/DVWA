@@ -1,7 +1,8 @@
 name: "HCL AppScan CodeSweep"
 on:
-  pull_request:
-    types: [opened,synchronize]
+  [push]
+  #pull_request:
+    #types: [opened,synchronize]
 jobs:
   scan:
     runs-on: ubuntu-latest
