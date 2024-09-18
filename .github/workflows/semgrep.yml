@@ -2,47 +2,29 @@
 name: Semgrep
 
 on:
-  # Scan changed files in PRs (diff-aware scanning):
-  pull_request: {}
-  # Scan on-demand through GitHub Actions interface:
-  workflow_dispatch: {}
-  # Scan mainline branches and report all findings:
-  push:
-    branches: ["master", "main"]
+  [push]
 
 jobs:
-  semgrep_scan:
+  semgrep:
     # User definable name of this GitHub Actions job.
     name: semgrep/ci
     # If you are self-hosting, change the following `runs-on` value:
     runs-on: ubuntu-latest
+
     container:
       # A Docker image with Semgrep installed. Do not change this.
-      image: returntocorp/semgrep
+      image: semgrep/semgrep
+
     # Skip any PR created by dependabot to avoid permission issues:
     if: (github.actor != 'dependabot[bot]')
-    permissions:
-      # required for all workflows
-      security-events: write
-      # only required for workflows in private repositories
-      actions: read
-      contents: read
 
     steps:
-      # Fetch project source with GitHub Actions Checkout.
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Perform Semgrep Analysis
-      # @NOTE: This is the actual semgrep command to scan your code.
-      # Modify the --config option to 'r/all' to scan using all rules,
-      # or use multiple flags to specify particular rules, such as
-      # --config r/all --config custom/rules
-        run: semgrep scan -q --text --config auto . > semgrep-results.log
-
-      # upload the results for the CodeQL GitHub app to annotate the code
-      - name: Save SARIF results as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: semgrep-scan-results
-          path: semgrep-results.log
+      # Fetch project source with GitHub Actions Checkout. Use either v3 or v4.
+      - uses: actions/checkout@v4
+      # Run the "semgrep ci" command on the command line of the docker image.
+      - run: semgrep ci
+        env:
+          # Connect to Semgrep AppSec Platform through your SEMGREP_APP_TOKEN.
+          # Generate a token from Semgrep AppSec Platform > Settings
+          # and add it to your GitHub secrets.
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
